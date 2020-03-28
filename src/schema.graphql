@@ -1,0 +1,29 @@
+# import * from './generated/prisma.graphql'
+type SuccessMessage {
+  message: String
+}
+
+type Mutation {
+  createPodcast(title: String, description: String, author: String, image: String, guests: Boolean, duration: String):Podcast!
+  updatePodcast(id: ID!, title: String, description: String, author: String, guests: Boolean, duration: String, image: String) :Podcast!
+  deletePodcast(id: ID!) :Podcast
+  signup(email: String!, password: String!, firstName: String!, lastName: String!): User!
+  signin(email: String!, password: String!): User!
+  signout: SuccessMessage
+  requestReset(email: String): SuccessMessage
+  resetPassword(resetToken: String!, password: String!, confirmPassword: String!): User!
+}
+
+type Query {
+  podcasts: [Podcast]!
+  podcast(where: PodcastWhereUniqueInput!): Podcast
+  me: User
+}
+
+type User {
+  id: ID
+  firstName: String!
+  lastName: String!
+  email: String!
+  permissions: [Permission!]!
+}

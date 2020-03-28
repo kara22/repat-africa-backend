@@ -1,0 +1,35 @@
+Arguments: 
+  /Users/karadiaby/.nvm/versions/node/v8.12.0/bin/node /Users/karadiaby/.nvm/versions/node/v8.12.0/bin/yarn add babel-preset-env
+
+PATH: 
+  /Users/karadiaby/.nvm/versions/node/v8.12.0/bin:./bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/sbin
+
+Yarn version: 
+  1.17.3
+
+Node version: 
+  8.12.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  SyntaxError: /Users/karadiaby/code/repat/repat-africa-backend/package.json: Unexpected token } in JSON at position 85
+      at JSON.parse (<anonymous>)
+      at /Users/karadiaby/.nvm/versions/node/v8.12.0/lib/node_modules/yarn/lib/cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (/Users/karadiaby/.nvm/versions/node/v8.12.0/lib/node_modules/yarn/lib/cli.js:304:30)
+      at /Users/karadiaby/.nvm/versions/node/v8.12.0/lib/node_modules/yarn/lib/cli.js:315:13
+      at <anonymous>
+
+npm manifest: 
+  {
+    "name": "repat-africa-backend",
+    "description": "The backend of repat.africa", 
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

@@ -1,0 +1,32 @@
+enum Permission {
+  ADMIN
+  MEMBER
+  PARTNER
+  SUPERADMIN
+}
+
+type User {
+  id: ID! @id
+  firstName: String!
+  lastName: String!
+  email:  String! @unique
+  password: String!
+  resetToken: String
+  resetTokenExpiry: String
+  permissions: [Permission] @scalarList(strategy: RELATION)
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+ 
+type Podcast {
+  id: ID! @id
+  title: String!
+  description: String!
+  image:String
+  author:String!
+  guests: Boolean!  @default(value: false)
+  duration: String
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+  user: User!
+}
