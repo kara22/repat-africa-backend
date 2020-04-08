@@ -12,12 +12,20 @@ type Mutation {
   signout: SuccessMessage
   requestReset(email: String): SuccessMessage
   resetPassword(resetToken: String!, password: String!, confirmPassword: String!): User!
+  updatePermissions(permissions: [Permission], userId: ID!): User
+  createResource(title: String, description: String, number: Int ) :Resource!
+  updateResource(id: ID!, title: String, description: String, number: Int ):Resource!
+  deleteResource(id: ID!) :Resource
+  createArticle(title: String, description: String, author: String, link: String, resource: ID!):Article!
 }
 
 type Query {
   podcasts: [Podcast]!
   podcast(where: PodcastWhereUniqueInput!): Podcast
   me: User
+  users: [User]!
+  resources: [Resource]!
+  resource(where: ResourceWhereUniqueInput!): Resource
 }
 
 type User {

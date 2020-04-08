@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { randomBytes } = require("crypto");
 const { promisify } = require("util");
 const { transport, niceEmail, makeANiceEmail } = require("../mail");
+const { hasPermission } = require("../utils");
 
 const Mutations = {
   async createPodcast(parent, args, ctx, info) {
@@ -15,11 +16,11 @@ const Mutations = {
           // create the relation ship between the podcast and the user
           user: {
             connect: {
-              id: ctx.request.userId
-            }
+              id: ctx.request.userId,
+            },
           },
-          ...args
-        }
+          ...args,
+        },
       },
       info
     );
@@ -36,8 +37,8 @@ const Mutations = {
       {
         data: updates,
         where: {
-          id: args.id
-        }
+          id: args.id,
+        },
       },
       info
     );
@@ -46,6 +47,14 @@ const Mutations = {
   async deletePodcast(parent, args, ctx, info) {
     const where = { id: args.id };
     const podcast = await ctx.db.query.podcast({ where }, `{ id title}`);
+
+    const hasPermissions = ctx.request.user.permissions.some((permission) =>
+      ["SUPERADMIN", "ADMIN"].includes(permission)
+    );
+
+    if (!hasPermissions) {
+      throw new Error("You do not have the permission to delete a podcast");
+    }
     return ctx.db.mutation.deletePodcast({ where }, info);
   },
 
@@ -57,15 +66,15 @@ const Mutations = {
       {
         data: {
           ...args,
-          password
-        }
+          password,
+        },
       },
       info
     );
     const token = jwt.sign({ userId: user.id }, process.env.APP_SECRET);
     ctx.response.cookie("token", token, {
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 365
+      maxAge: 1000 * 60 * 60 * 24 * 365,
     });
     return user;
   },
@@ -84,7 +93,7 @@ const Mutations = {
     const token = jwt.sign({ userId: user.id }, process.env.APP_SECRET);
     ctx.response.cookie("token", token, {
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 365
+      maxAge: 1000 * 60 * 60 * 24 * 365,
     });
     return user;
   },
@@ -104,7 +113,7 @@ const Mutations = {
 
     const res = await ctx.db.mutation.updateUser({
       where: { email: args.email },
-      data: { resetToken, resetTokenExpiry }
+      data: { resetToken, resetTokenExpiry },
     });
 
     const mailRes = await transport.sendMail({
@@ -114,7 +123,7 @@ const Mutations = {
       html: makeANiceEmail(
         `Your password reset token is here \n\n 
         <a href="${process.env.FRONTEND_URL}/user/reset?resetToken=${resetToken}">Click here to reset</a>`
-      )
+      ),
     });
 
     return { message: "Thanks!" };
@@ -127,8 +136,8 @@ const Mutations = {
     const [user] = await ctx.db.query.users({
       where: {
         resetToken: args.resetToken,
-        resetTokenExpiry_gte: (Date.now() - 3600000).toString()
-      }
+        resetTokenExpiry_gte: (Date.now() - 3600000).toString(),
+      },
     });
 
     if (!user) {
@@ -141,18 +150,133 @@ const Mutations = {
       data: {
         password,
         resetToken: null,
-        resetTokenExpiry: null
-      }
+        resetTokenExpiry: null,
+      },
     });
 
     const token = jwt.sign({ userId: updatedUser.id }, process.env.APP_SECRET);
     ctx.response.cookie("token", token, {
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 365
+      maxAge: 1000 * 60 * 60 * 24 * 365,
     });
 
     return updatedUser;
-  }
+  },
+
+  async updatePermissions(parent, args, ctx, info) {
+    if (!ctx.request.userId) {
+      throw new Error("You must to be logged in");
+    }
+    const currentUser = await ctx.db.query.user(
+      {
+        where: {
+          id: ctx.request.user.id,
+        },
+      },
+      info
+    );
+
+    console.log("CurrentUSer", currentUser);
+    hasPermission(currentUser, ["SUPERADMIN"]);
+
+    return ctx.db.mutation.updateUser(
+      {
+        data: {
+          permissions: {
+            set: args.permissions,
+          },
+        },
+        where: {
+          id: args.userId,
+        },
+      },
+      info
+    );
+  },
+  async createResource(parent, args, ctx, info) {
+    if (!ctx.request.userId) {
+      throw new Error("You must be logged to create a ressource");
+    }
+    const resource = await ctx.db.mutation.createResource(
+      {
+        data: {
+          // create the relation ship between the resource and the user
+          user: {
+            connect: {
+              id: ctx.request.userId,
+            },
+          },
+          ...args,
+        },
+      },
+      info
+    );
+    return resource;
+  },
+
+  updateResource(parent, args, ctx, info) {
+    // first take a copy of the updates
+    const updates = { ...args };
+
+    // remove the ID from the updatesflum
+    delete updates.id;
+    // run the update method
+    return ctx.db.mutation.updateResource(
+      {
+        data: updates,
+        where: {
+          id: args.id,
+        },
+      },
+      info
+    );
+  },
+  async deleteResource(parent, args, ctx, info) {
+    const where = { id: args.id };
+    const resource = await ctx.db.query.resource({ where }, `{ id title}`);
+
+    const hasPermissions = ctx.request.user.permissions.some((permission) =>
+      ["SUPERADMIN", "ADMIN"].includes(permission)
+    );
+
+    if (!hasPermissions) {
+      throw new Error("You do not have the permission to delete a podcast");
+    }
+    return ctx.db.mutation.deleteResource({ where }, info);
+  },
+  async createArticle(
+    parent,
+    { title, resource, author, link, description },
+    ctx,
+    info
+  ) {
+    if (!ctx.request.userId) {
+      throw new Error("You must be logged to create a ressource");
+    }
+    const article = await ctx.db.mutation.createArticle(
+      {
+        data: {
+          // create the relation ship between the article and the user
+          user: {
+            connect: {
+              id: ctx.request.userId,
+            },
+          },
+          resource: {
+            connect: {
+              id: resource,
+            },
+          },
+          title,
+          description,
+          link,
+          author,
+        },
+      },
+      info
+    );
+    return article;
+  },
 };
 
 module.exports = Mutations;

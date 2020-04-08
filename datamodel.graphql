@@ -30,3 +30,26 @@ type Podcast {
   updatedAt: DateTime! @updatedAt
   user: User!
 }
+
+type Resource {
+  id: ID! @id
+  title: String!
+  number: Int!
+  description: String!
+  user: User!
+  articles: [Article] @relation(name: "ArticlesForResource" onDelete: CASCADE)
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+
+type Article {
+  id: ID! @id
+  title: String! 
+  description: String!
+  link: String!
+  author: String!
+  user: User!
+  resource: Resource! @relation(name: "ArticlesForResource")
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
